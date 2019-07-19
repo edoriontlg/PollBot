@@ -49,6 +49,17 @@ bot.on("message", message => {
         try {
             pollChoices.forEach(element => {
 
+                //This is where you put your answer data. for me, this is the answers and their percentage
+                var tempData = {
+                    answer: element,
+                    percentage: 0
+                };
+
+                /*
+
+                This is the first method I tried. It didnt worked so I'm trying other things
+
+
                 //This is where you put your json data. for me, this is the answers and their percentage
                 var tempData = {
                     answer: element,
@@ -57,17 +68,18 @@ bot.on("message", message => {
 
                 //If tempData didn't worked, this message wont show up
                 console.log(FgYellow + "Successfully created the tempData " + FgWhite + JSON.stringify(tempData));
+                */
             });
 
         } catch (error) {
             console.log(FgRed + "Failed to create the json for the poll" + FgWhite + "\n"
                 + error);
         }
-
     }
 
     if (message.content.startsWith("PollHelp")) {
-        message.channel.send("To create a poll, send `CreatePoll=Answer 1;Answer 2;Answer 3`."
+        message.delete;
+        message.channel.send("To create a poll, send ```CreatePoll=Answer 1;Answer 2;Answer 3```"
             + "\nYou can set any number of choices between 2 and ∞.")
     }
 })
