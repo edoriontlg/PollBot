@@ -1,0 +1,26 @@
+{
+  "name": "pollbot",
+  "version": "0.0.1",
+  "description": "A discord bot that create polls for your server",
+  "main": "main.js",
+  "dependencies": {
+    "discord.js": "^11.5.1"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "node main.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/edoriontlg/PollBot.git"
+  },
+  "keywords": [
+    "node.js"
+  ],
+  "author": "Edorion",
+  "license": "GPL-3.0",
+  "bugs": {
+    "url": "https://github.com/edoriontlg/PollBot/issues"
+  },
+  "homepage": "https://github.com/edoriontlg/PollBot#readme"
+}
