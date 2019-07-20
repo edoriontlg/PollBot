@@ -17,6 +17,7 @@ const bot = new Discord.Client();
 const ProgressBar = require('progress');
 
 var persistentData; //DATA
+var emojiMax = 3;
 
 //Read the token from the token.txt file
 var token = fs.readFileSync('token.txt', 'utf8');
@@ -26,6 +27,7 @@ var pollData = [];
 
 //Init persitentData
 var persistentData = {};
+var emojiList = {};
 
 //Some random var
 totalVote = 0;
@@ -44,6 +46,10 @@ bot.on("ready", function () { //When the bot is ready, do this
     dataPath = "data/data.json";
     var contents = fs.readFileSync(dataPath);
     persistentData = JSON.parse(contents);
+
+    var contents = fs.readFileSync("data/emojiList.json");
+    emojiList = JSON.parse(contents);
+    console.log(emojiList);
 })
 
 
@@ -156,12 +162,27 @@ bot.on("message", message => {
             message.channel.send("This poll does not exist");
         }
     }
+
+
+    if (message.content.startsWith("Poll number ")) {
+
+        splitMessage = message.content.split(" "); //Get the ID of the poll
+        ID = splitMessage[2].split("\n")
+        if (persistentData["DATA"].hasOwnProperty(ID[0])) {  //If the poll does exist, delete it
+            persistentData["DATA"][ID[0]]["Info"]["MessageID"] = message.id;
+            reloadData();
+        }
+    }
 })
 
 //When a reaction is added, do this
 bot.on('messageReactionAdd', (messageReaction, user) => {
     if (messageReaction.message.content.startsWith("Poll number ")) {
-        messageReaction.message.channel.send("yeyeyey");
+        splitMessage = messageReaction.message.content.split(" "); //Get the ID of the poll
+        ID = splitMessage[2].split("\n")
+        if (persistentData["DATA"].hasOwnProperty(ID[0])) {
+            console.log("EMOJIIIIII")
+        }
     }
 })
 
@@ -274,30 +295,7 @@ function reloadData() {
         }
     });
 
-
-    try {
-
-        var contents = fs.readFileSync(dataPath); //Read the new DATA
-        persistentData = contents; //Reload in "persistantData" the new DATA
-        console.log(FgMagenta + "Success!!!" + FgWhite)
-
-    } catch (error) {
-
-        console.log(FgRed + "Error !!" + FgWhite)
-    }
-}
-
-function readData() {
-    try {
-
-        var contents = fs.readFileSync(dataPath); //Read the new DATA
-        persistentData = JSON.parse(JSON.stringify(contents)); //Reload in "persistantData" the new DATA
-        console.log(FgMagenta + "Success!!!" + FgWhite)
-
-    } catch (error) {
-
-        console.log(FgRed + "Error !!" + FgWhite)
-    }
+    console.log(FgMagenta + "Success!!!" + FgWhite)
 }
 
 
