@@ -54,7 +54,7 @@ bot.on("message", message => {
 
         //Clear the last poll. I'm working on something so that the bot can manage multiple poll. For the moment, he manage only one
         pollData = [];
-        console.log(FgRed + "Cleared last pollData" + FgWhite);
+        console.log(FgMagenta + "Cleared last pollData" + FgWhite);
 
 
         //Create the name of the poll based on the date, so we avoid writing the same poll in multiple files
@@ -62,7 +62,7 @@ bot.on("message", message => {
 
 
 
-        console.log(BgMagenta + FgBlack + " - Poll Detected - " + FgWhite + BgBlack);
+        console.log(BgRed + FgBlack + " - Poll Detected - " + FgWhite + BgBlack);
 
         //This modify the message so that we only keep the answers
         activePoll = message.content.split("=");
@@ -116,7 +116,7 @@ bot.on("message", message => {
             //If the pollData is created with no errors, send this message and continue doing is job
             console.log(FgMagenta + "Poll data succesfully created\n" + FgWhite);
 
-            console.log(FgMagenta + "Sending message" + FgWhite);
+            console.log(FgCyan + "Sending message" + FgWhite);
 
             //This send the message created by createPollLook()
             message.channel.send("Poll number " + pollName + "\n" +
@@ -147,26 +147,31 @@ bot.on("message", message => {
     //This is used to delete old polls
     if (message.content.startsWith("DeletePoll ")) {
 
-        splitMessage = message.content.split(" ");
-        if (persistentData["DATA"].hasOwnProperty(splitMessage[1])) {
+        splitMessage = message.content.split(" "); //Get the ID of the poll
+        if (persistentData["DATA"].hasOwnProperty(splitMessage[1])) {  //If the poll does exist, delete it
             delete persistentData["DATA"][splitMessage[1]];
-            console.log(FgYellow + "Succesfuly deleted the data" + FgWhite);
+            console.log(FgMagenta + "Succesfuly deleted the data" + FgWhite);
             reloadData();
+        } else {
+            message.channel.send("This poll does not exist");
         }
     }
 
-
+    //
+    //NEED                      /\
+    //FIX                      /  \
+    //
     //This get the ID of the message so that we can delete it later
     if (message.content.startsWith("Poll number ")) {
         splitMessage = message.content.split(" ");
         ID = splitMessage[2].split("\n");
         console.log(ID[0]);
-        if (persistentData["DATA"].hasOwnProperty(ID[0])) {
+        /*if (persistentData["DATA"].hasOwnProperty(ID[0])) {
             persistentData["DATA"][ID[0]]["Info"]["MessageID"] = message.id;
             reloadData();
         } else {
             console.log('OK£IHOUU');
-        }
+        }*/
     }
 })
 
@@ -193,7 +198,7 @@ function createPollLook() {
     });
     */
 
-    pollData.forEach(element => {
+    pollData.forEach(element => {  //totalVotes now contains... totalVotes yay
         totalVote += element.votes;
     });
 
@@ -274,7 +279,7 @@ function emojiToNumber(number = "0️⃣") {
 //This function reload the Data
 function reloadData() {
 
-    console.log(FgYellow + "Reloding the Data..." + FgWhite)
+    console.log(FgCyan + "Reloding the Data..." + FgWhite)
 
     var json = JSON.stringify(persistentData); //Prepare the DATA for saving
 
@@ -283,7 +288,7 @@ function reloadData() {
             console.log(FgRed + "erreur inatendue..." + FgWhite)
             console.log(err);
         } else {
-            console.log("DATA saved!")
+            console.log(FgMagenta + "DATA saved!" + FgWhite)
         }
     })
 
@@ -291,7 +296,7 @@ function reloadData() {
 
         var contents = fs.readFileSync(dataPath); //Read the new DATA
         persistentData = JSON.parse(JSON.stringify(contents)); //Reload in "persistantData" the new DATA
-        console.log("Success!!!")
+        console.log(FgMagenta + "Success!!!" + FgWhite)
 
     } catch (error) {
 
