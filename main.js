@@ -16,6 +16,9 @@ const fs = require("fs");
 const bot = new Discord.Client();
 const ProgressBar = require('progress');
 
+//The data stored
+var persistentData = require("./data/data.json");
+
 //Read the token from the token.txt file
 var token = fs.readFileSync('token.txt', 'utf8');
 
@@ -25,14 +28,24 @@ var pollData = [];
 //Some random var
 totalVote = 0;
 
-bot.login(token);
+bot.login(token);  //Login the bot with the token read in token.txt
 
-bot.on("ready", function () {
-    console.log("PollBot Connected !");
-    bot.user.setPresence("online");
-    bot.user.setActivity("PollHelp for help");
+bot.on("ready", function () { //When the bot is ready, do this
+    
+    console.log("PollBot Connected !"); //We know when the bot is connected
+
+
+    bot.user.setPresence("online");                //Visual informations on discord
+    bot.user.setActivity("PollHelp for help");     //Visual informations on discord
+
+
+    dataPath = "data/data.json"; //useless
+
+    console.log(persistentData);
 })
 
+
+//When a message is received, do this
 bot.on("message", message => {
 
     if (message.content.startsWith("CreatePoll")) {
@@ -84,6 +97,8 @@ bot.on("message", message => {
             console.log(FgMagenta + "pollData succesfully created\n" + FgWhite);
             console.log(pollData);
             console.log("\n");
+                                        // il est donné plus haut en fonction de la date
+            persistentData["DATA"] = pollName; //Id du message
 
             console.log(FgMagenta + "Sending message" + FgWhite);
 
@@ -108,6 +123,15 @@ bot.on("message", message => {
     }
 })
 
+//When a reaction is added, do this
+bot.on('messageReactionAdd', (messageReaction, user) => {
+    if (messageReaction.message.content.startsWith("Poll number ")){
+        messageReaction.message.channel.send("yeyeyey");
+    }
+})
+
+
+
 
 //This function will create the poll look
 function createPollLook() {
@@ -116,23 +140,26 @@ function createPollLook() {
     //reset totalVote
     totalVote = 0;
 
+    /*    Test function : create random votes
     pollData.forEach(element => {
         element.votes += Math.round(Math.random() * (300 - 0) + 0);   
     });
+    */
 
     pollData.forEach(element => {
         totalVote += element.votes;   
     });
 
-    console.log(pollData);
+    console.log(pollData);  //Write the pollData and the totalVotes for easy understanding
     console.log(totalVote);
 
-    for (let index = 0; index < pollData.length; index++) {
-        const element = pollData[index];
+    for (let index = 0; index < pollData.length; index++) {  //For each value in pollData, it will
+        const element = pollData[index];                     //Create 2 lines
+
         returnedStringToPoll += "\n";
         returnedStringToPoll += index + "° : **" + element.answer + "** (" + element.votes + " votes)\n";
 
-        if (totalVote != 0) {
+        if (totalVote != 0) {   //Create the progress bar
             returnedStringToPoll += "⬜".repeat((element.votes / totalVote) * 10)
         }
     }
@@ -166,6 +193,34 @@ function numberToEmoji(number = 0) {
         return ('9️⃣')
     } else {
         return ('🔟')
+    }
+}
+
+
+//This return a number from emoji number
+function emojiToNumber(number = "0️⃣") {
+    if (number ==  '0️⃣') {
+        return (0)
+    } else if (number == '1️⃣') {
+        return (1)
+    } else if (number == '2️⃣') {
+        return (2)
+    } else if (number == '3️⃣') {
+        return (3)
+    } else if (number == '4️⃣') {
+        return (4)
+    } else if (number == '5️⃣') {
+        return (5)
+    } else if (number == '6️⃣') {
+        return (6)
+    } else if (number == '7️⃣') {
+        return (7)
+    } else if (number == '8️⃣') {
+        return (8)
+    } else if (number == '9️⃣') {
+        return (9)
+    } else {
+        return (10)
     }
 }
 
