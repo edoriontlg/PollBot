@@ -295,7 +295,33 @@ function reloadData() {
         }
     });
 
+
     console.log(FgMagenta + "Success!!!" + FgWhite)
+
+
+    try {
+
+        var contents = fs.readFileSync(dataPath); //Read the new DATA
+        persistentData = JSON.parse(JSON.stringify(contents)); //Reload in "persistantData" the new DATA
+        console.log(FgMagenta + "Success!!!" + FgWhite)
+
+    } catch (error) {
+
+        console.log(FgRed + "Error !!" + FgWhite)
+    }
+}
+
+function readData() {
+    try {
+
+        var contents = fs.readFileSync(dataPath); //Read the new DATA
+        persistentData = JSON.parse(JSON.stringify(contents)); //Reload in "persistantData" the new DATA
+        console.log(FgMagenta + "Success!!!" + FgWhite)
+
+    } catch (error) {
+
+        console.log(FgRed + "Error !!" + FgWhite)
+    }
 }
 
 
