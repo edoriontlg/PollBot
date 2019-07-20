@@ -278,7 +278,7 @@ function reloadData() {
     try {
 
         var contents = fs.readFileSync(dataPath); //Read the new DATA
-        persistentData = contents; //Reload in "persistantData" the new DATA
+        persistentData = JSON.parse(JSON.stringify(contents)); //Reload in "persistantData" the new DATA
         console.log(FgMagenta + "Success!!!" + FgWhite)
 
     } catch (error) {
