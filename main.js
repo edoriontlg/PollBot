@@ -24,25 +24,26 @@ var token = fs.readFileSync('token.txt', 'utf8');
 //Init of the pollData array
 var pollData = [];
 
+//Init persitentData
+var persistentData = {};
+
 //Some random var
 totalVote = 0;
 
-bot.login(token);  //Login the bot with the token read in token.txt
+bot.login(token); //Login the bot with the token read in token.txt
 
 bot.on("ready", function () { //When the bot is ready, do this
 
     console.log("PollBot Connected !"); //We know when the bot is connected
 
 
-    bot.user.setPresence("online");                //Visual informations on discord
-    bot.user.setActivity("PollHelp for help");     //Visual informations on discord
+    bot.user.setPresence("online"); //Visual informations on discord
+    bot.user.setActivity("PollHelp for help"); //Visual informations on discord
 
     //The data stored
     dataPath = "data/data.json";
     var contents = fs.readFileSync(dataPath);
     persistentData = JSON.parse(contents);
-
-    console.log(persistentData);
 })
 
 
@@ -71,16 +72,16 @@ bot.on("message", message => {
 
 
         //Write the poll name so we can find it later, plus the values
-        console.log(FgCyan + "Poll initiated. Name : " + FgGreen + pollName + "\n"
-            + FgCyan + "Answers : " + FgGreen + pollChoices + FgWhite);
+        console.log(FgCyan + "Poll initiated. Name : " + FgGreen + pollName + "\n" +
+            FgCyan + "Answers : " + FgGreen + pollChoices + FgWhite);
 
 
         try {
 
             //Create all the data in pollData 
-            console.log(FgMagenta + "Creating pollData" + FgWhite)
+            console.log(FgCyan + "Creating pollData" + FgWhite)
 
-            //Mise en place de la DATA (partie INFO)
+            //Set up of the data ([INFO] part)
             persistentData["DATA"][pollName] = {
                 "Info": {
                     "Name": pollName,
@@ -88,16 +89,15 @@ bot.on("message", message => {
                     "UserID": message.author.id
                 }
             }
-            console.log("Poll's info created in DATA")
+            console.log(FgMagenta + "Poll info created in DATA" + FgWhite)
 
             pollChoices.forEach(element => {
 
                 //This is where you put your answer data. for me, this is the answers and their number of votes
-                console.log(FgYellow + "Creating tempData " + FgWhite)
-                var tempData = { answer: element, votes: 0 };
-                console.log(FgCyan + "Successfully created tempData " + FgGreen + JSON.stringify(tempData) + FgWhite);
-
-                console.log(FgYellow + "Pushing tempData to pollData " + FgWhite);
+                var tempData = {
+                    answer: element,
+                    votes: 0
+                };
 
                 pollData.push(tempData);
 
@@ -105,34 +105,33 @@ bot.on("message", message => {
                 if (persistentData["DATA"][pollName].hasOwnProperty("Choices")) { //Test if the choices has been set up
                     persistentData["DATA"][pollName]["Choices"][element] = 0; //If yes save the answer
                 } else {
-                    persistentData["DATA"][pollName]["Choices"] = { 'initial': 0 } //If no set up the choices
+                    persistentData["DATA"][pollName]["Choices"] = {
+                        'initial': 0
+                    } //If no set up the choices
                     persistentData["DATA"][pollName]["Choices"][element] = 0; //And save the answer
                     delete persistentData["DATA"][pollName]["Choices"]['initial'];
                 }
-
-                console.log(FgCyan + "Successfully pushed tempData to pollData " + FgWhite);
             });
 
             //If the pollData is created with no errors, send this message and continue doing is job
-            console.log(FgMagenta + "pollData succesfully created\n" + FgWhite);
-            console.log(pollData);
-            console.log("\n");
-            // il est donné plus haut en fonction de la date
-
-
+            console.log(FgMagenta + "Poll data succesfully created\n" + FgWhite);
 
             console.log(FgMagenta + "Sending message" + FgWhite);
 
+            //This send the message created by createPollLook()
             message.channel.send("Poll number " + pollName + "\n" +
                 createPollLook()
             );
 
+            //End of the poll creation process. 
             console.log(FgMagenta + "Message sent !! Poll is active" + FgWhite);
+
+            //Reload the data so it includes the newly made poll
             reloadData();
 
         } catch (error) {
-            console.log(FgRed + "Failed to create the json for the poll" + FgWhite + "\n"
-                + error);
+            console.log(FgRed + "Failed to create the poll" + FgWhite + "\n" +
+                error);
         }
     }
 
@@ -140,8 +139,34 @@ bot.on("message", message => {
     //Help command
     if (message.content.startsWith("PollHelp")) {
         message.delete;
-        message.channel.send("To create a poll, send ```CreatePoll=Answer 1;Answer 2;Answer 3```"
-            + "\nYou can set any number of choices between 2 and 10.")
+        message.channel.send("To create a poll, send ```CreatePoll=Answer 1;Answer 2;Answer 3```" +
+            "\nYou can set any number of choices between 2 and 10." +
+            "\n\nYou can delete a poll by sending ```DeletePoll POLL_NUMBER```")
+    }
+
+    //This is used to delete old polls
+    if (message.content.startsWith("DeletePoll ")) {
+
+        splitMessage = message.content.split(" ");
+        if (persistentData["DATA"].hasOwnProperty(splitMessage[1])) {
+            delete persistentData["DATA"][splitMessage[1]];
+            console.log(FgYellow + "Succesfuly deleted the data" + FgWhite);
+            reloadData();
+        }
+    }
+
+
+    //This get the ID of the message so that we can delete it later
+    if (message.content.startsWith("Poll number ")) {
+        splitMessage = message.content.split(" ");
+        ID = splitMessage[2].split("\n");
+        console.log(ID[0]);
+        if (persistentData["DATA"].hasOwnProperty(ID[0])) {
+            persistentData["DATA"][ID[0]]["Info"]["MessageID"] = message.id;
+            reloadData();
+        } else {
+            console.log('OK£IHOUU');
+        }
     }
 })
 
@@ -172,16 +197,16 @@ function createPollLook() {
         totalVote += element.votes;
     });
 
-    console.log(pollData);  //Write the pollData and the totalVotes for easy understanding
+    console.log(pollData); //Write the pollData and the totalVotes for easy understanding
     console.log(totalVote);
 
-    for (let index = 0; index < pollData.length; index++) {  //For each value in pollData, it will
-        const element = pollData[index];                     //Create 2 lines
+    for (let index = 0; index < pollData.length; index++) { //For each value in pollData, it will
+        const element = pollData[index]; //Create 2 lines
 
         returnedStringToPoll += "\n";
         returnedStringToPoll += index + "° : **" + element.answer + "** (" + element.votes + " votes)\n";
 
-        if (totalVote != 0) {   //Create the progress bar
+        if (totalVote != 0) { //Create the progress bar
             returnedStringToPoll += "⬜".repeat((element.votes / totalVote) * 10)
         }
     }
@@ -249,23 +274,29 @@ function emojiToNumber(number = "0️⃣") {
 //This function reload the Data
 function reloadData() {
 
-    console.log("Reloding the Data...")
+    console.log(FgYellow + "Reloding the Data..." + FgWhite)
 
     var json = JSON.stringify(persistentData); //Prepare the DATA for saving
 
     fs.writeFile(dataPath, json, 'utf8', function readFileCallback(err, data) { //Save the DATA
         if (err) {
-            console.log("erreur inatendue...")
+            console.log(FgRed + "erreur inatendue..." + FgWhite)
             console.log(err);
+        } else {
+            console.log("DATA saved!")
         }
     })
-    console.log("DATA saved!")
 
-    var contents = fs.readFileSync(dataPath); //Read the new DATA
-    persistentData = JSON.parse(JSON.stringify(contents)); //Reload in "persistantData" the new DATA
+    try {
 
-    console.log("Success!!!")
+        var contents = fs.readFileSync(dataPath); //Read the new DATA
+        persistentData = JSON.parse(JSON.stringify(contents)); //Reload in "persistantData" the new DATA
+        console.log("Success!!!")
 
+    } catch (error) {
+
+        console.log(FgRed + "Error !!" + FgWhite)
+    }
 }
 
 
