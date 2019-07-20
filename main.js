@@ -156,23 +156,6 @@ bot.on("message", message => {
             message.channel.send("This poll does not exist");
         }
     }
-
-    //
-    //NEED                      /\
-    //FIX                      /  \
-    //
-    //This get the ID of the message so that we can delete it later
-    if (message.content.startsWith("Poll number ")) {
-        splitMessage = message.content.split(" ");
-        ID = splitMessage[2].split("\n");
-        console.log(ID[0]);
-        /*if (persistentData["DATA"].hasOwnProperty(ID[0])) {
-            persistentData["DATA"][ID[0]]["Info"]["MessageID"] = message.id;
-            reloadData();
-        } else {
-            console.log('OK£IHOUU');
-        }*/
-    }
 })
 
 //When a reaction is added, do this
@@ -283,15 +266,28 @@ function reloadData() {
 
     var json = JSON.stringify(persistentData); //Prepare the DATA for saving
 
-    fs.writeFile(dataPath, json, 'utf8', function readFileCallback(err, data) { //Save the DATA
+    fs.writeFile(dataPath, json, 'utf8', function callback(err){
         if (err) {
-            console.log(FgRed + "erreur inatendue..." + FgWhite)
-            console.log(err);
-        } else {
-            console.log(FgMagenta + "DATA saved!" + FgWhite)
+            console.log(FgRed + err + FgWhite);
+        }else{
+            console.log(FgMagenta + "Data written successfuly" + FgWhite);
         }
-    })
+    });
 
+
+    try {
+
+        var contents = fs.readFileSync(dataPath); //Read the new DATA
+        persistentData = contents; //Reload in "persistantData" the new DATA
+        console.log(FgMagenta + "Success!!!" + FgWhite)
+
+    } catch (error) {
+
+        console.log(FgRed + "Error !!" + FgWhite)
+    }
+}
+
+function readData() {
     try {
 
         var contents = fs.readFileSync(dataPath); //Read the new DATA
@@ -303,7 +299,6 @@ function reloadData() {
         console.log(FgRed + "Error !!" + FgWhite)
     }
 }
-
 
 
 //This is the color value used to make the console looks cool.
