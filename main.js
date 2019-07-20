@@ -8,7 +8,7 @@ Do not delete depencies !!
 |   |    |       ||       ||       || |_|   ||       |  |   |  
 |___|    |_______||_______||_______||_______||_______|  |___|  
 
-PollBot V0.0.1, Edorion
+PollBot V0.0.1, Edorion and Leo
 */
 
 const Discord = require("discord.js");
@@ -16,8 +16,7 @@ const fs = require("fs");
 const bot = new Discord.Client();
 const ProgressBar = require('progress');
 
-//The data stored
-var persistentData = require("./data/data.json");
+var persistentData; //DATA
 
 //Read the token from the token.txt file
 var token = fs.readFileSync('token.txt', 'utf8');
@@ -31,15 +30,17 @@ totalVote = 0;
 bot.login(token);  //Login the bot with the token read in token.txt
 
 bot.on("ready", function () { //When the bot is ready, do this
-    
+
     console.log("PollBot Connected !"); //We know when the bot is connected
 
 
     bot.user.setPresence("online");                //Visual informations on discord
     bot.user.setActivity("PollHelp for help");     //Visual informations on discord
 
-
-    dataPath = "data/data.json"; //useless
+    //The data stored
+    dataPath = "data/data.json";
+    var contents = fs.readFileSync(dataPath);
+    persistentData = JSON.parse(contents);
 
     console.log(persistentData);
 })
@@ -79,6 +80,16 @@ bot.on("message", message => {
             //Create all the data in pollData 
             console.log(FgMagenta + "Creating pollData" + FgWhite)
 
+            //Mise en place de la DATA (partie INFO)
+            persistentData["DATA"][pollName] = {
+                "Info": {
+                    "Name": pollName,
+                    "User": message.author.username,
+                    "UserID": message.author.id
+                }
+            }
+            console.log("Poll's info created in DATA")
+
             pollChoices.forEach(element => {
 
                 //This is where you put your answer data. for me, this is the answers and their number of votes
@@ -90,6 +101,15 @@ bot.on("message", message => {
 
                 pollData.push(tempData);
 
+                //Create the element in the DATA
+                if (persistentData["DATA"][pollName].hasOwnProperty("Choices")) { //Test if the choices has been set up
+                    persistentData["DATA"][pollName]["Choices"][element] = 0; //If yes save the answer
+                } else {
+                    persistentData["DATA"][pollName]["Choices"] = { 'initial': 0 } //If no set up the choices
+                    persistentData["DATA"][pollName]["Choices"][element] = 0; //And save the answer
+                    delete persistentData["DATA"][pollName]["Choices"]['initial'];
+                }
+
                 console.log(FgCyan + "Successfully pushed tempData to pollData " + FgWhite);
             });
 
@@ -97,8 +117,9 @@ bot.on("message", message => {
             console.log(FgMagenta + "pollData succesfully created\n" + FgWhite);
             console.log(pollData);
             console.log("\n");
-                                        // il est donné plus haut en fonction de la date
-            persistentData["DATA"] = pollName; //Id du message
+            // il est donné plus haut en fonction de la date
+
+
 
             console.log(FgMagenta + "Sending message" + FgWhite);
 
@@ -107,6 +128,7 @@ bot.on("message", message => {
             );
 
             console.log(FgMagenta + "Message sent !! Poll is active" + FgWhite);
+            reloadData();
 
         } catch (error) {
             console.log(FgRed + "Failed to create the json for the poll" + FgWhite + "\n"
@@ -125,7 +147,7 @@ bot.on("message", message => {
 
 //When a reaction is added, do this
 bot.on('messageReactionAdd', (messageReaction, user) => {
-    if (messageReaction.message.content.startsWith("Poll number ")){
+    if (messageReaction.message.content.startsWith("Poll number ")) {
         messageReaction.message.channel.send("yeyeyey");
     }
 })
@@ -147,7 +169,7 @@ function createPollLook() {
     */
 
     pollData.forEach(element => {
-        totalVote += element.votes;   
+        totalVote += element.votes;
     });
 
     console.log(pollData);  //Write the pollData and the totalVotes for easy understanding
@@ -199,7 +221,7 @@ function numberToEmoji(number = 0) {
 
 //This return a number from emoji number
 function emojiToNumber(number = "0️⃣") {
-    if (number ==  '0️⃣') {
+    if (number == '0️⃣') {
         return (0)
     } else if (number == '1️⃣') {
         return (1)
@@ -222,6 +244,28 @@ function emojiToNumber(number = "0️⃣") {
     } else {
         return (10)
     }
+}
+
+//This function reload the Data
+function reloadData() {
+
+    console.log("Reloding the Data...")
+
+    var json = JSON.stringify(persistentData); //Prepare the DATA for saving
+
+    fs.writeFile(dataPath, json, 'utf8', function readFileCallback(err, data) { //Save the DATA
+        if (err) {
+            console.log("erreur inatendue...")
+            console.log(err);
+        }
+    })
+    console.log("DATA saved!")
+
+    var contents = fs.readFileSync(dataPath); //Read the new DATA
+    persistentData = JSON.parse(JSON.stringify(contents)); //Reload in "persistantData" the new DATA
+
+    console.log("Success!!!")
+
 }
 
 
