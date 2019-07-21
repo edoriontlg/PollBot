@@ -8,7 +8,7 @@ Do not delete depencies !!
 |   |    |       ||       ||       || |_|   ||       |  |   |  
 |___|    |_______||_______||_______||_______||_______|  |___|  
 
-PollBot V0.9.0, Edorion and LepGamingGo
+PollBot V1.0.0, Edorion and LepGamingGo
 */
 
 const Discord = require("discord.js");
@@ -17,7 +17,7 @@ const bot = new Discord.Client();
 const ProgressBar = require('progress');
 
 var persistentData; //DATA
-var emojiMax = 3;
+var emojiMax = 0;
 
 //Read the token from the token.txt file
 var token = fs.readFileSync('token.txt', 'utf8');
@@ -47,7 +47,11 @@ bot.on("ready", function () { //When the bot is ready, do this
     //Get the emojilist
     var contents = fs.readFileSync("data/emojilist.json");
     emojiList = JSON.parse(contents);
-    console.log(emojiList);
+    for (var key in emojiList["emoji"]) {
+        emojiMax++;
+    }
+
+    console.log(FgCyan + "Total emojis : " + FgGreen + emojiMax);
 })
 
 
@@ -189,7 +193,9 @@ bot.on("message", message => {
         message.delete;
         message.channel.send("To create a poll, send ```CreatePoll=Answer 1;Answer 2;Answer 3```" +
             "\nYou can set any number of choices between 2 and the number of emote you have in emojilist.json." +
-            "\n\nYou can delete a poll by sending ```DeletePoll POLL_NUMBER```")
+            "\n\nYou can delete a poll by sending ```DeletePoll POLL_NUMBER```."
+            + "\n\nTo vote, add the emoji associated with your answer."
+            + "\n\nYou can modify your vote by removing your last vote.")
     }
 
     //This is used to delete old polls
@@ -351,7 +357,7 @@ function createPollLook(ID) {
     //Write totalVotes for easy understanding
     console.log("Votes : " + totalVote);
 
-    for (let index = 0; index < size; index++) { //For each value in pollData
+    for (let index = 0; index < size; index++) {
         var i = 0;
         for (var key in persistentData["DATA"][ID]["Choices"]) {
             if (i == index) {
@@ -373,7 +379,10 @@ function createPollLook(ID) {
 
 
         if (totalVote != 0) { //Create the progress bar
-            returnedStringToPoll += "⬜".repeat(Math.round((persistentData["DATA"][ID]["Choices"][answer] / totalVote) * 10))
+            returnedStringToPoll += "⬜".repeat(Math.round((persistentData["DATA"][ID]["Choices"][answer] / totalVote) * 10));
+            returnedStringToPoll += "⬛".repeat(10 - Math.round((persistentData["DATA"][ID]["Choices"][answer] / totalVote) * 10));
+        } else {
+            returnedStringToPoll += "⬛".repeat(10);
         }
     }
     return returnedStringToPoll

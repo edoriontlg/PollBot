@@ -1,4 +1,4 @@
-# PollBot
+# PollBot V1.0.0
 
 Welcome !! This bot is created so that we can do polls in discord (yay)
 
@@ -13,6 +13,8 @@ Welcome !! This bot is created so that we can do polls in discord (yay)
  
  - To create a poll, send in the chat ```CreatePoll=FIRST CHOICE;SECOND CHOICE;ETC```. You can add as many choices as you have emoji in ```emojilist.json```
  
+ - To vote, add the emoji associated with the answer you want. You can re vote, but only if you delete your last vote
+
  - To Delete a poll (from the json and not the chat), just write ```DeletePoll POLL_ID```. The poll id is written at the top of the poll message
  
  - To add your emoji, simply edit ```emojilist.json``` by adding the ID of the emoji you want (Documentation about emoji [Here](https://discordapp.com/developers/docs/resources/emoji)
