@@ -49,7 +49,6 @@ bot.on("ready", function () { //When the bot is ready, do this
 
     var contents = fs.readFileSync("data/emojiList.json");
     emojiList = JSON.parse(contents);
-    console.log(emojiList);
 })
 
 
@@ -97,43 +96,93 @@ bot.on("message", message => {
             }
             console.log(FgMagenta + "Poll info created in DATA" + FgWhite)
 
+            var numberElement = 0;
+            var emojiError = false
+
             pollChoices.forEach(element => {
 
-                //This is where you put your answer data. for me, this is the answers and their number of votes
-                var tempData = {
-                    answer: element,
-                    votes: 0
-                };
+                numberElement = numberElement + 1; //Count the element
 
-                pollData.push(tempData);
-
-                //Create the element in the DATA
-                if (persistentData["DATA"][pollName].hasOwnProperty("Choices")) { //Test if the choices has been set up
-                    persistentData["DATA"][pollName]["Choices"][element] = 0; //If yes save the answer
+                if (numberElement > emojiMax) { //ERROR because not enouth emoji
+                    emojiError = true;
                 } else {
-                    persistentData["DATA"][pollName]["Choices"] = {
-                        'initial': 0
-                    } //If no set up the choices
-                    persistentData["DATA"][pollName]["Choices"][element] = 0; //And save the answer
-                    delete persistentData["DATA"][pollName]["Choices"]['initial'];
+
+                    //This is where you put your answer data. for me, this is the answers and their number of votes
+                    var tempData = {
+                        answer: element,
+                        votes: 0
+                    };
+
+                    pollData.push(tempData);
+
+                    //Create the element in the DATA
+                    if (persistentData["DATA"][pollName].hasOwnProperty("Choices")) { //Test if the choices has been set up
+                        persistentData["DATA"][pollName]["Choices"][element] = 0; //If yes save the answer
+                    } else {
+                        persistentData["DATA"][pollName]["Choices"] = {
+                            'initial': 0
+                        } //If no set up the choices
+                        persistentData["DATA"][pollName]["Choices"][element] = 0; //And save the answer
+                        delete persistentData["DATA"][pollName]["Choices"]['initial'];
+                    }
+
+                    //Choose a emoji for this answer
+                    var continueEmoji = true;
+                    while (continueEmoji == true) {
+                        var emojiNumber = getRandomInt(1, emojiMax)
+                        var i = 0;
+                        for (var key in emojiList["emoji"]) {
+                            i = i + 1;
+                            if (i == emojiNumber) {
+                                var choosedEmoji = key;
+                            }
+                        }
+                        //Verify that this emoji is not used
+                        if (persistentData["DATA"][pollName].hasOwnProperty("emoji")) {
+                            if (persistentData["DATA"][pollName]["emoji"].hasOwnProperty(choosedEmoji)) {
+                                continueEmoji = true; //This emoji is already choosed so we need to choose a another
+                            } else {
+                                continueEmoji = false; //This emoji is not already so we can use it
+                            }
+                        } else {
+                            continueEmoji = false; //None emoji has been choosed so this one is good
+                        }
+                    }
+
+
+                    if (persistentData["DATA"][pollName].hasOwnProperty("emoji")) { //Test if emoji has been set up
+                        persistentData["DATA"][pollName]["emoji"][choosedEmoji] = element;
+                    } else {
+                        persistentData["DATA"][pollName]["emoji"] = { //If no set it up
+                            'initial': 0
+                        } //If no set up the choices
+                        persistentData["DATA"][pollName]["emoji"][choosedEmoji] = element; //And save the emoji for this answer
+                        delete persistentData["DATA"][pollName]["emoji"]['initial'];
+                    }
                 }
+
             });
 
-            //If the pollData is created with no errors, send this message and continue doing is job
-            console.log(FgMagenta + "Poll data succesfully created\n" + FgWhite);
+            if (emojiError == false) { //No error so send the messsage
+                //If the pollData is created with no errors, send this message and continue doing is job
+                console.log(FgMagenta + "Poll data succesfully created\n" + FgWhite);
 
-            console.log(FgCyan + "Sending message" + FgWhite);
+                console.log(FgCyan + "Sending message" + FgWhite);
 
-            //This send the message created by createPollLook()
-            message.channel.send("Poll number " + pollName + "\n" +
-                createPollLook()
-            );
+                //This send the message created by createPollLook()
+                message.channel.send("Poll number " + pollName + "\n" +
+                    createPollLook()
+                );
 
-            //End of the poll creation process. 
-            console.log(FgMagenta + "Message sent !! Poll is active" + FgWhite);
+                //End of the poll creation process. 
+                console.log(FgMagenta + "Message sent !! Poll is active" + FgWhite);
 
-            //Reload the data so it includes the newly made poll
-            reloadData();
+                //Reload the data so it includes the newly made poll
+                reloadData();
+            } else {
+                console.log(FgRed + "Failed to create the poll" + FgWhite + "\n" +
+                    FgBlue + "Not enought emoji in the list" + FgWhite);
+            }
 
         } catch (error) {
             console.log(FgRed + "Failed to create the poll" + FgWhite + "\n" +
@@ -163,12 +212,12 @@ bot.on("message", message => {
         }
     }
 
-
+    //Get the ID of the poll message
     if (message.content.startsWith("Poll number ")) {
 
         splitMessage = message.content.split(" "); //Get the ID of the poll
         ID = splitMessage[2].split("\n")
-        if (persistentData["DATA"].hasOwnProperty(ID[0])) {  //If the poll does exist, delete it
+        if (persistentData["DATA"].hasOwnProperty(ID[0])) {  //If the poll does exist, note his id
             persistentData["DATA"][ID[0]]["Info"]["MessageID"] = message.id;
             reloadData();
         }
@@ -177,11 +226,62 @@ bot.on("message", message => {
 
 //When a reaction is added, do this
 bot.on('messageReactionAdd', (messageReaction, user) => {
-    if (messageReaction.message.content.startsWith("Poll number ")) {
+    if (messageReaction.message.content.startsWith("Poll number ")) { //Verify if the reaction is on a poll
         splitMessage = messageReaction.message.content.split(" "); //Get the ID of the poll
-        ID = splitMessage[2].split("\n")
-        if (persistentData["DATA"].hasOwnProperty(ID[0])) {
-            console.log("EMOJIIIIII")
+        split2 = splitMessage[2].split("\n")
+        pollID = split2[0]
+        if (persistentData["DATA"].hasOwnProperty(pollID)) {
+            reactEmoji = messageReaction.emoji;
+            console.log(reactEmoji.name)
+            if (persistentData["DATA"][pollID]["emoji"].hasOwnProperty(reactEmoji.name)) { //Verify if the emoji is on the list
+                var userIsOk = false;
+                if (persistentData["DATA"][pollID].hasOwnProperty("Users")) { //Test if Users has been set up
+
+                    if (persistentData["DATA"][pollID]["Users"].hasOwnProperty(user)) {
+                        userIsOk = false; //The user already voted
+                    } else {
+                        userIsOk = true; //The user is clean
+                    }
+
+                } else {
+
+                    persistentData["DATA"][pollID]["Users"] = { //If no set it up
+                        'initial': 0
+                    } //If no set up the choices
+                    delete persistentData["DATA"][pollID]["Users"]['initial'];
+                    userIsOk = true //The user not voted because the User was not set up
+
+                }
+
+                if (userIsOk == true) { //The user not voted in this poll
+
+                    var reactAnswer = persistentData["DATA"][pollID]["emoji"][reactEmoji.name];
+                    persistentData["DATA"][pollID]["Choices"][reactAnswer]++; //Add a vote
+                    persistentData["DATA"][pollID]["Users"][user] = reactAnswer;
+                    reloadData();
+
+                } else { //The user already voted
+
+                    console.log(FgRed + "Failed to save the vote" + FgWhite + "\n" +
+                        FgBlue + "This user already voted" + FgWhite);
+                    messageReaction.remove(user); //Remove the vote
+
+                }
+            } else { //This emoji can't be used
+                messageReaction.remove(user); //Remove the vote
+            }
+        }
+    }
+})
+
+//When a reaction is removed do this...
+bot.on('messageReactionRemove', (messageReaction, user) => {
+    if (persistentData["DATA"][pollID].hasOwnProperty("Users")) {
+        if (persistentData["DATA"][pollID]["Users"].hasOwnProperty(user)) {
+            var removeAnswer = persistentData["DATA"][pollID]["Users"][user];
+            persistentData["DATA"][pollID]["Choices"][removeAnswer] = persistentData["DATA"][pollID]["Choices"][removeAnswer] - 1;
+            delete persistentData["DATA"][pollID]["Users"][user];
+            reloadData();
         }
     }
 })
@@ -287,41 +387,23 @@ function reloadData() {
 
     var json = JSON.stringify(persistentData); //Prepare the DATA for saving
 
-    fs.writeFile(dataPath, json, 'utf8', function callback(err){
+    fs.writeFile(dataPath, json, 'utf8', function callback(err) {
         if (err) {
             console.log(FgRed + err + FgWhite);
-        }else{
+        } else {
             console.log(FgMagenta + "Data written successfuly" + FgWhite);
         }
     });
 
 
     console.log(FgMagenta + "Success!!!" + FgWhite)
-
-
-    try {
-
-        var contents = fs.readFileSync(dataPath); //Read the new DATA
-        persistentData = JSON.parse(JSON.stringify(contents)); //Reload in "persistantData" the new DATA
-        console.log(FgMagenta + "Success!!!" + FgWhite)
-
-    } catch (error) {
-
-        console.log(FgRed + "Error !!" + FgWhite)
-    }
 }
 
-function readData() {
-    try {
-
-        var contents = fs.readFileSync(dataPath); //Read the new DATA
-        persistentData = JSON.parse(JSON.stringify(contents)); //Reload in "persistantData" the new DATA
-        console.log(FgMagenta + "Success!!!" + FgWhite)
-
-    } catch (error) {
-
-        console.log(FgRed + "Error !!" + FgWhite)
-    }
+//Get a random number
+function getRandomInt(min, max) {
+    min = Math.ceil(min);
+    max = Math.floor(max);
+    return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
 
