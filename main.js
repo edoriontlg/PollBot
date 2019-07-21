@@ -83,8 +83,8 @@ bot.on("message", message => {
 
         try {
 
-            //Create all the data in pollData 
-            console.log(FgCyan + "Creating pollData" + FgWhite)
+            //Create the poll and his data
+            console.log(FgCyan + "Creating poll data" + FgWhite)
 
             //Set up of the data ([INFO] part)
             persistentData["DATA"][pollName] = {
