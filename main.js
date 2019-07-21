@@ -8,7 +8,7 @@ Do not delete depencies !!
 |   |    |       ||       ||       || |_|   ||       |  |   |  
 |___|    |_______||_______||_______||_______||_______|  |___|  
 
-PollBot V0.0.1, Edorion and Leo
+PollBot V0.0.1, Edorion and LepGamingGo
 */
 
 const Discord = require("discord.js");
@@ -99,6 +99,8 @@ bot.on("message", message => {
             var numberElement = 0;
             var emojiError = false
 
+
+            //For each choices
             pollChoices.forEach(element => {
 
                 numberElement = numberElement + 1; //Count the element
@@ -170,9 +172,7 @@ bot.on("message", message => {
                 console.log(FgCyan + "Sending message" + FgWhite);
 
                 //This send the message created by createPollLook()
-                message.channel.send("Poll number " + pollName + "\n" +
-                    createPollLook()
-                );
+                message.channel.send(createPollLook(pollName));
 
                 //End of the poll creation process. 
                 console.log(FgMagenta + "Message sent !! Poll is active" + FgWhite);
@@ -195,7 +195,7 @@ bot.on("message", message => {
     if (message.content.startsWith("PollHelp")) {
         message.delete;
         message.channel.send("To create a poll, send ```CreatePoll=Answer 1;Answer 2;Answer 3```" +
-            "\nYou can set any number of choices between 2 and 10." +
+            "\nYou can set any number of choices between 2 and the number of emote you have in emojilist.json." +
             "\n\nYou can delete a poll by sending ```DeletePoll POLL_NUMBER```")
     }
 
@@ -203,7 +203,7 @@ bot.on("message", message => {
     if (message.content.startsWith("DeletePoll ")) {
 
         splitMessage = message.content.split(" "); //Get the ID of the poll
-        if (persistentData["DATA"].hasOwnProperty(splitMessage[1])) {  //If the poll does exist, delete it
+        if (persistentData["DATA"].hasOwnProperty(splitMessage[1])) { //If the poll does exist, delete it
             delete persistentData["DATA"][splitMessage[1]];
             console.log(FgMagenta + "Succesfuly deleted the data" + FgWhite);
             reloadData();
@@ -217,7 +217,7 @@ bot.on("message", message => {
 
         splitMessage = message.content.split(" "); //Get the ID of the poll
         ID = splitMessage[2].split("\n")
-        if (persistentData["DATA"].hasOwnProperty(ID[0])) {  //If the poll does exist, note his id
+        if (persistentData["DATA"].hasOwnProperty(ID[0])) { //If the poll does exist, note his id
             persistentData["DATA"][ID[0]]["Info"]["MessageID"] = message.id;
             reloadData();
         }
@@ -226,16 +226,27 @@ bot.on("message", message => {
 
 //When a reaction is added, do this
 bot.on('messageReactionAdd', (messageReaction, user) => {
-    if (messageReaction.message.content.startsWith("Poll number ")) { //Verify if the reaction is on a poll
-        splitMessage = messageReaction.message.content.split(" "); //Get the ID of the poll
+
+    //If the reacted message is a poll
+    if (messageReaction.message.content.startsWith("Poll number ")) {
+        splitMessage = messageReaction.message.content.split(" "); 
         split2 = splitMessage[2].split("\n")
-        pollID = split2[0]
+        pollID = split2[0]        //Get the ID of the poll
+
+        //If the poll does exist in data.json
         if (persistentData["DATA"].hasOwnProperty(pollID)) {
+
+            //For better readabilty
             reactEmoji = messageReaction.emoji;
-            console.log(reactEmoji.name)
-            if (persistentData["DATA"][pollID]["emoji"].hasOwnProperty(reactEmoji.name)) { //Verify if the emoji is on the list
+
+            //If the emoji category of the poll contain this emoji, do this
+            if (persistentData["DATA"][pollID]["emoji"].hasOwnProperty(reactEmoji.name)) {
+
+                //Reset userIsOk
                 var userIsOk = false;
-                if (persistentData["DATA"][pollID].hasOwnProperty("Users")) { //Test if Users has been set up
+
+                 //Test if Users has been set up
+                if (persistentData["DATA"][pollID].hasOwnProperty("Users")) {
 
                     if (persistentData["DATA"][pollID]["Users"].hasOwnProperty(user)) {
                         userIsOk = false; //The user already voted
@@ -249,16 +260,20 @@ bot.on('messageReactionAdd', (messageReaction, user) => {
                         'initial': 0
                     } //If no set up the choices
                     delete persistentData["DATA"][pollID]["Users"]['initial'];
-                    userIsOk = true //The user not voted because the User was not set up
-
+                    userIsOk = true //The user didn't voted because the User was not set up
                 }
 
-                if (userIsOk == true) { //The user not voted in this poll
+                if (userIsOk == true) { //The user didn't voted in this poll
 
                     var reactAnswer = persistentData["DATA"][pollID]["emoji"][reactEmoji.name];
+
                     persistentData["DATA"][pollID]["Choices"][reactAnswer]++; //Add a vote
-                    persistentData["DATA"][pollID]["Users"][user] = reactAnswer;
+                    persistentData["DATA"][pollID]["Users"][user] = reactAnswer; //Assign this vote to this user
+
                     reloadData();
+
+                    //Rewrite the message
+                    messageReaction.message.edit(createPollLook(pollID));
 
                 } else { //The user already voted
 
@@ -276,12 +291,33 @@ bot.on('messageReactionAdd', (messageReaction, user) => {
 
 //When a reaction is removed do this...
 bot.on('messageReactionRemove', (messageReaction, user) => {
-    if (persistentData["DATA"][pollID].hasOwnProperty("Users")) {
-        if (persistentData["DATA"][pollID]["Users"].hasOwnProperty(user)) {
-            var removeAnswer = persistentData["DATA"][pollID]["Users"][user];
-            persistentData["DATA"][pollID]["Choices"][removeAnswer] = persistentData["DATA"][pollID]["Choices"][removeAnswer] - 1;
-            delete persistentData["DATA"][pollID]["Users"][user];
-            reloadData();
+
+    //Verify if the reaction is on a poll
+    if (messageReaction.message.content.startsWith("Poll number ")) { 
+
+        splitMessage = messageReaction.message.content.split(" ");
+        split2 = splitMessage[2].split("\n")
+        pollID = split2[0] //Get the ID of the poll
+
+        //Assign the emoji for better readability
+        reactEmoji = messageReaction.emoji;
+
+        //Check if user category does exist
+        if (persistentData["DATA"][pollID].hasOwnProperty("Users")) {
+
+            //Check if the user voted
+            if (persistentData["DATA"][pollID]["Users"].hasOwnProperty(user)) {
+            
+                if (persistentData["DATA"][pollID]["emoji"].hasOwnProperty(reactEmoji.name)) {
+                    if (persistentData["DATA"][pollID]["Users"][user] == persistentData["DATA"][pollID]["emoji"][reactEmoji.name]) {
+                        var removeAnswer = persistentData["DATA"][pollID]["Users"][user]; //Si oui regarder quel vote
+                        persistentData["DATA"][pollID]["Choices"][removeAnswer] = persistentData["DATA"][pollID]["Choices"][removeAnswer] - 1; //Et supprimer son vote
+                        delete persistentData["DATA"][pollID]["Users"][user]; //effacer l'user dans la liste
+                        reloadData();
+                        messageReaction.message.edit(createPollLook(pollID))
+                    }
+                }
+            }
         }
     }
 })
@@ -290,8 +326,8 @@ bot.on('messageReactionRemove', (messageReaction, user) => {
 
 
 //This function will create the poll look
-function createPollLook() {
-    returnedStringToPoll = "";
+function createPollLook(ID) {
+    returnedStringToPoll = "Poll number " + ID + "\n";
 
     //reset totalVote
     totalVote = 0;
@@ -301,22 +337,40 @@ function createPollLook() {
         element.votes += Math.round(Math.random() * (300 - 0) + 0);   
     });
     */
+    var size = 0;
+    if (persistentData["DATA"].hasOwnProperty(ID)) {
+        for (var key in persistentData["DATA"][ID]["Choices"]) {
+            totalVote += persistentData["DATA"][ID]["Choices"][key];
+            size++;
+        }
+    }
 
-    pollData.forEach(element => {  //totalVotes now contains... totalVotes yay
-        totalVote += element.votes;
-    });
+    //Write totalVotes for easy understanding
+    console.log("Votes : " + totalVote);
 
-    console.log(pollData); //Write the pollData and the totalVotes for easy understanding
-    console.log(totalVote);
+    for (let index = 0; index < size; index++) { //For each value in pollData, it will
+        var i = 0;
+        for (var key in persistentData["DATA"][ID]["Choices"]) {
+            if (i == index) {
+                var answer = key;
+            }
+            i = i + 1;
+        } //
 
-    for (let index = 0; index < pollData.length; index++) { //For each value in pollData, it will
-        const element = pollData[index]; //Create 2 lines
+        emojisend = "";
+        for (var key in persistentData["DATA"][ID]["emoji"]) {
+            if (persistentData["DATA"][ID]["emoji"][key] == answer) {
+                var emojiName = key;
+            }
+        }
+        emojisend = emojiList["emoji"][emojiName];
 
         returnedStringToPoll += "\n";
-        returnedStringToPoll += index + "° : **" + element.answer + "** (" + element.votes + " votes)\n";
+        returnedStringToPoll += emojisend + " : **" + answer + "** (" + persistentData["DATA"][ID]["Choices"][answer] + " votes)\n";
+
 
         if (totalVote != 0) { //Create the progress bar
-            returnedStringToPoll += "⬜".repeat((element.votes / totalVote) * 10)
+            returnedStringToPoll += "⬜".repeat(Math.round((persistentData["DATA"][ID]["Choices"][answer] / totalVote) * 10))
         }
     }
     return returnedStringToPoll
