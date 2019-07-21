@@ -308,11 +308,22 @@ bot.on('messageReactionRemove', (messageReaction, user) => {
             //Check if the user voted
             if (persistentData["DATA"][pollID]["Users"].hasOwnProperty(user)) {
             
+                //If the emoji does correspond to a vote
                 if (persistentData["DATA"][pollID]["emoji"].hasOwnProperty(reactEmoji.name)) {
+
+                
                     if (persistentData["DATA"][pollID]["Users"][user] == persistentData["DATA"][pollID]["emoji"][reactEmoji.name]) {
-                        var removeAnswer = persistentData["DATA"][pollID]["Users"][user]; //Si oui regarder quel vote
-                        persistentData["DATA"][pollID]["Choices"][removeAnswer] = persistentData["DATA"][pollID]["Choices"][removeAnswer] - 1; //Et supprimer son vote
-                        delete persistentData["DATA"][pollID]["Users"][user]; //effacer l'user dans la liste
+
+                        //For better readability
+                        var removeAnswer = persistentData["DATA"][pollID]["Users"][user];
+
+                        //Delete the vote
+                        persistentData["DATA"][pollID]["Choices"][removeAnswer] = persistentData["DATA"][pollID]["Choices"][removeAnswer] - 1;
+                        
+                        //Delete the user
+                        delete persistentData["DATA"][pollID]["Users"][user];
+
+
                         reloadData();
                         messageReaction.message.edit(createPollLook(pollID))
                     }
@@ -332,12 +343,11 @@ function createPollLook(ID) {
     //reset totalVote
     totalVote = 0;
 
-    /*    Test function : create random votes
-    pollData.forEach(element => {
-        element.votes += Math.round(Math.random() * (300 - 0) + 0);   
-    });
-    */
+
+
     var size = 0;
+
+    //Get the number of choices
     if (persistentData["DATA"].hasOwnProperty(ID)) {
         for (var key in persistentData["DATA"][ID]["Choices"]) {
             totalVote += persistentData["DATA"][ID]["Choices"][key];
@@ -348,14 +358,14 @@ function createPollLook(ID) {
     //Write totalVotes for easy understanding
     console.log("Votes : " + totalVote);
 
-    for (let index = 0; index < size; index++) { //For each value in pollData, it will
+    for (let index = 0; index < size; index++) { //For each value in pollData
         var i = 0;
         for (var key in persistentData["DATA"][ID]["Choices"]) {
             if (i == index) {
                 var answer = key;
             }
             i = i + 1;
-        } //
+        } 
 
         emojisend = "";
         for (var key in persistentData["DATA"][ID]["emoji"]) {
@@ -376,8 +386,31 @@ function createPollLook(ID) {
     return returnedStringToPoll
 }
 
-//This function will return a bar based on the number of votes and the total votes
+//This function reload the Data
+function reloadData() {
 
+    console.log(FgCyan + "Reloding the Data..." + FgWhite)
+
+    var json = JSON.stringify(persistentData); //Prepare the DATA for saving
+
+    fs.writeFile(dataPath, json, 'utf8', function callback(err) {
+        if (err) {
+            console.log(FgRed + err + FgWhite);
+        } else {
+            console.log(FgMagenta + "Data written successfuly" + FgWhite);
+        }
+    });
+
+
+    console.log(FgMagenta + "Success!!!" + FgWhite)
+}
+
+//Get a random number
+function getRandomInt(min, max) {
+    min = Math.ceil(min);
+    max = Math.floor(max);
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+}
 
 //This return number emoji from numbers
 function numberToEmoji(number = 0) {
@@ -432,32 +465,6 @@ function emojiToNumber(number = "0️⃣") {
     } else {
         return (10)
     }
-}
-
-//This function reload the Data
-function reloadData() {
-
-    console.log(FgCyan + "Reloding the Data..." + FgWhite)
-
-    var json = JSON.stringify(persistentData); //Prepare the DATA for saving
-
-    fs.writeFile(dataPath, json, 'utf8', function callback(err) {
-        if (err) {
-            console.log(FgRed + err + FgWhite);
-        } else {
-            console.log(FgMagenta + "Data written successfuly" + FgWhite);
-        }
-    });
-
-
-    console.log(FgMagenta + "Success!!!" + FgWhite)
-}
-
-//Get a random number
-function getRandomInt(min, max) {
-    min = Math.ceil(min);
-    max = Math.floor(max);
-    return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
 
