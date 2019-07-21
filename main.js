@@ -8,7 +8,7 @@ Do not delete depencies !!
 |   |    |       ||       ||       || |_|   ||       |  |   |  
 |___|    |_______||_______||_______||_______||_______|  |___|  
 
-PollBot V0.0.1, Edorion and LepGamingGo
+PollBot V0.9.0, Edorion and LepGamingGo
 */
 
 const Discord = require("discord.js");
