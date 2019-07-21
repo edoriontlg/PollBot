@@ -22,10 +22,7 @@ var emojiMax = 3;
 //Read the token from the token.txt file
 var token = fs.readFileSync('token.txt', 'utf8');
 
-//Init of the pollData array
-var pollData = [];
-
-//Init persitentData
+//Init persitentData and emojilist
 var persistentData = {};
 var emojiList = {};
 
@@ -42,13 +39,15 @@ bot.on("ready", function () { //When the bot is ready, do this
     bot.user.setPresence("online"); //Visual informations on discord
     bot.user.setActivity("PollHelp for help"); //Visual informations on discord
 
-    //The data stored
+    //Initiate persistentData. This basically get all the polls
     dataPath = "data/data.json";
     var contents = fs.readFileSync(dataPath);
     persistentData = JSON.parse(contents);
 
-    var contents = fs.readFileSync("data/emojiList.json");
+    //Get the emojilist
+    var contents = fs.readFileSync("data/emojilist.json");
     emojiList = JSON.parse(contents);
+    console.log(emojiList);
 })
 
 
@@ -56,12 +55,6 @@ bot.on("ready", function () { //When the bot is ready, do this
 bot.on("message", message => {
 
     if (message.content.startsWith("CreatePoll")) {
-
-        //Clear the last poll. I'm working on something so that the bot can manage multiple poll. For the moment, he manage only one
-        pollData = [];
-        console.log(FgMagenta + "Cleared last pollData" + FgWhite);
-
-
         //Create the name of the poll based on the date, so we avoid writing the same poll in multiple files
         var pollName = Date.now();
 
@@ -81,6 +74,7 @@ bot.on("message", message => {
             FgCyan + "Answers : " + FgGreen + pollChoices + FgWhite);
 
 
+        //Try-catch, avoiding crashes (so bot wont have to restart in case of an error)
         try {
 
             //Create the poll and his data
@@ -90,15 +84,15 @@ bot.on("message", message => {
             persistentData["DATA"][pollName] = {
                 "Info": {
                     "Name": pollName,
-                    "User": message.author.username,
-                    "UserID": message.author.id
+                    "User": message.author.username, //Creator of the poll
+                    "UserID": message.author.id      //Id of the creator
                 }
             }
             console.log(FgMagenta + "Poll info created in DATA" + FgWhite)
 
             var numberElement = 0;
             var emojiError = false
-
+ 
 
             //For each choices
             pollChoices.forEach(element => {
@@ -107,31 +101,29 @@ bot.on("message", message => {
 
                 if (numberElement > emojiMax) { //ERROR because not enouth emoji
                     emojiError = true;
+                    message.channel.send("Too much answers. Try with less answers or add more emojis in ```emojilist.json```")
                 } else {
 
-                    //This is where you put your answer data. for me, this is the answers and their number of votes
-                    var tempData = {
-                        answer: element,
-                        votes: 0
-                    };
-
-                    pollData.push(tempData);
-
-                    //Create the element in the DATA
+                    //Create the element in the DATA (basically saving answers)
                     if (persistentData["DATA"][pollName].hasOwnProperty("Choices")) { //Test if the choices has been set up
+
                         persistentData["DATA"][pollName]["Choices"][element] = 0; //If yes save the answer
-                    } else {
-                        persistentData["DATA"][pollName]["Choices"] = {
+
+                    } else {  //If no set up the choices
+
+                        persistentData["DATA"][pollName]["Choices"] = {  //Initiate Choices
                             'initial': 0
-                        } //If no set up the choices
+                        } 
+
                         persistentData["DATA"][pollName]["Choices"][element] = 0; //And save the answer
-                        delete persistentData["DATA"][pollName]["Choices"]['initial'];
+                        delete persistentData["DATA"][pollName]["Choices"]['initial'];  //delete the inital value used to create Choices
                     }
 
                     //Choose a emoji for this answer
                     var continueEmoji = true;
                     while (continueEmoji == true) {
-                        var emojiNumber = getRandomInt(1, emojiMax)
+
+                        var emojiNumber = getRandomInt(1, emojiMax) //Get a random emoji
                         var i = 0;
                         for (var key in emojiList["emoji"]) {
                             i = i + 1;
@@ -139,20 +131,21 @@ bot.on("message", message => {
                                 var choosedEmoji = key;
                             }
                         }
-                        //Verify that this emoji is not used
+
+                        //Verify if this emoji is not used
                         if (persistentData["DATA"][pollName].hasOwnProperty("emoji")) {
                             if (persistentData["DATA"][pollName]["emoji"].hasOwnProperty(choosedEmoji)) {
-                                continueEmoji = true; //This emoji is already choosed so we need to choose a another
+                                continueEmoji = true; //This emoji is already taken so we need to choose a another
                             } else {
-                                continueEmoji = false; //This emoji is not already so we can use it
+                                continueEmoji = false; //This emoji is not already taken so we can use it
                             }
                         } else {
-                            continueEmoji = false; //None emoji has been choosed so this one is good
+                            continueEmoji = false;     //None emoji has been choosed so this one is good
                         }
                     }
 
 
-                    if (persistentData["DATA"][pollName].hasOwnProperty("emoji")) { //Test if emoji has been set up
+                    if (persistentData["DATA"][pollName].hasOwnProperty("emoji")) { //Test if emoji category has been set up
                         persistentData["DATA"][pollName]["emoji"][choosedEmoji] = element;
                     } else {
                         persistentData["DATA"][pollName]["emoji"] = { //If no set it up
@@ -166,7 +159,7 @@ bot.on("message", message => {
             });
 
             if (emojiError == false) { //No error so send the messsage
-                //If the pollData is created with no errors, send this message and continue doing is job
+                //If the data is created with no errors, send this message and continue is job
                 console.log(FgMagenta + "Poll data succesfully created\n" + FgWhite);
 
                 console.log(FgCyan + "Sending message" + FgWhite);
