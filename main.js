@@ -78,8 +78,8 @@ bot.on("message", message => {
 
         try {
 
-            //Create all the data in pollData 
-            console.log(FgCyan + "Creating pollData" + FgWhite)
+            //Create the poll and his data
+            console.log(FgCyan + "Creating poll data" + FgWhite)
 
             //Set up of the data ([INFO] part)
             persistentData["DATA"][pollName] = {
@@ -102,14 +102,14 @@ bot.on("message", message => {
                 pollData.push(tempData);
 
                 //Create the element in the DATA
-                if (persistentData["DATA"][pollName].hasOwnProperty("Choices")) { //Test if the choices has been set up
-                    persistentData["DATA"][pollName]["Choices"][element] = 0; //If yes save the answer
+                if (persistentData["DATA"][pollName].hasOwnProperty("Choices")) {   //Test if the choices has been set up
+                    persistentData["DATA"][pollName]["Choices"][element] = 0;       //If yes save the answer
                 } else {
                     persistentData["DATA"][pollName]["Choices"] = {
                         'initial': 0
                     } //If no set up the choices
-                    persistentData["DATA"][pollName]["Choices"][element] = 0; //And save the answer
-                    delete persistentData["DATA"][pollName]["Choices"]['initial'];
+                    persistentData["DATA"][pollName]["Choices"][element] = 0;       //And save the answer
+                    delete persistentData["DATA"][pollName]["Choices"]['initial'];  //Delete the first value used to initiate Choices
                 }
             });
 
