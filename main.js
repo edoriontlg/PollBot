@@ -206,6 +206,7 @@ bot.on("message", message => {
             delete persistentData["DATA"][splitMessage[1]];
             console.log(FgMagenta + "Succesfuly deleted the data" + FgWhite);
             reloadData();
+            message.channel.send("Poll deleted");
         } else {
             message.channel.send("This poll does not exist");
         }
