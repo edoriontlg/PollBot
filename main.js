@@ -8,7 +8,7 @@ Do not delete depencies !!
 |   |    |       ||       ||       || |_|   ||       |  |   |  
 |___|    |_______||_______||_______||_______||_______|  |___|  
 
-PollBot V1.0.0, Edorion and LepGamingGo
+PollBot V1.1.0, Edorion and LepGamingGo
 */
 
 const Discord = require("discord.js");
@@ -52,6 +52,7 @@ bot.on("ready", function () { //When the bot is ready, do this
     }
 
     console.log(FgCyan + "Total emojis : " + FgGreen + emojiMax);
+
 })
 
 
@@ -60,130 +61,186 @@ bot.on("message", message => {
 
     if (message.content.startsWith("CreatePoll")) {
         //Create the name of the poll based on the date, so we avoid writing the same poll in multiple files
-        var pollName = Date.now();
-
+        
+        var pollID = Date.now();
+        var erreur = false;
 
 
         console.log(BgRed + FgBlack + " - Poll Detected - " + FgWhite + BgBlack);
 
         //This modify the message so that we only keep the answers
         activePoll = message.content.split("=");
-        activePoll.splice(0, 1);
-        pollChoices = activePoll[0].split(";");
-
-
-
-        //Write the poll name so we can find it later, plus the values
-        console.log(FgCyan + "Poll initiated. Name : " + FgGreen + pollName + "\n" +
-            FgCyan + "Answers : " + FgGreen + pollChoices + FgWhite);
-
-
-        //Try-catch, avoiding crashes (so bot wont have to restart in case of an error)
-        try {
-
-            //Create the poll and his data
-            console.log(FgCyan + "Creating poll data" + FgWhite)
-
-            //Set up of the data ([INFO] part)
-            persistentData["DATA"][pollName] = {
-                "Info": {
-                    "Name": pollName,
-                    "User": message.author.username, //Creator of the poll
-                    "UserID": message.author.id      //Id of the creator
-                }
+        //We get the name of the Poll and the answers
+        try{
+            pollArguments = activePoll[1].split(";");
+            pollStart = activePoll[0].split("(");
+            pollStart2 = pollStart[1].split(")");
+            pollName = pollStart2[0];
+            if (pollArguments.length <= 1){ //The Poll need at least 2 answers
+                console.log(BgRed + FgBlack + " ERROR NOT ENOUGHT ANSWERS " + FgWhite + BgBlack);
+                erreur = true;
             }
-            console.log(FgMagenta + "Poll info created in DATA" + FgWhite)
+            if (pollArguments[pollArguments.length - 1] == ""){ //avoid null arguments
+                console.log(BgRed + FgBlack + " ERROR DON'T FINISH BY ; " + FgWhite + BgBlack);
+                erreur = true;
+            }
 
-            var numberElement = 0;
-            var emojiError = false
- 
+            var pollChoices = new Array(pollArguments.length);
+            var pollEmoji = new Array(pollArguments.length);
+            var usedEmoji = ["none"];
 
-            //For each choices
-            pollChoices.forEach(element => {
+            elementID = -1;
 
-                numberElement = numberElement + 1; //Count the element
+            pollArguments.forEach(element => {
 
-                if (numberElement > emojiMax) { //ERROR because not enouth emoji
-                    emojiError = true;
-                    message.channel.send("Too much answers. Try with less answers or add more emojis in ```emojilist.json```")
-                } else {
-
-                    //Create the element in the DATA (basically saving answers)
-                    if (persistentData["DATA"][pollName].hasOwnProperty("Choices")) { //Test if the choices has been set up
-
-                        persistentData["DATA"][pollName]["Choices"][element] = 0; //If yes save the answer
-
-                    } else {  //If no set up the choices
-
-                        persistentData["DATA"][pollName]["Choices"] = {  //Initiate Choices
-                            'initial': 0
-                        } 
-
-                        persistentData["DATA"][pollName]["Choices"][element] = 0; //And save the answer
-                        delete persistentData["DATA"][pollName]["Choices"]['initial'];  //delete the inital value used to create Choices
+                elementID += 1;
+                temp = pollArguments[elementID].split("(");
+                pollChoices[elementID] = temp[0];
+                try{
+                    temp = temp[1].split(")");
+                    pollEmoji[elementID] = temp[0];
+                    if (emojiList["emoji"].hasOwnProperty(pollEmoji[elementID]) && usedEmoji.includes(pollEmoji[elementID]) == false){
+                        usedEmoji.push(pollEmoji[elementID]);
+                    }else {
+                        pollEmoji[elementID] = "none";
                     }
-
-                    //Choose a emoji for this answer
-                    var continueEmoji = true;
-                    while (continueEmoji == true) {
-
-                        var emojiNumber = getRandomInt(1, emojiMax) //Get a random emoji
-                        var i = 0;
-                        for (var key in emojiList["emoji"]) {
-                            i = i + 1;
-                            if (i == emojiNumber) {
-                                var choosedEmoji = key;
-                            }
-                        }
-
-                        //Verify if this emoji is not used
-                        if (persistentData["DATA"][pollName].hasOwnProperty("emoji")) {
-                            if (persistentData["DATA"][pollName]["emoji"].hasOwnProperty(choosedEmoji)) {
-                                continueEmoji = true; //This emoji is already taken so we need to choose a another
-                            } else {
-                                continueEmoji = false; //This emoji is not already taken so we can use it
-                            }
-                        } else {
-                            continueEmoji = false;     //None emoji has been choosed so this one is good
-                        }
-                    }
-
-
-                    if (persistentData["DATA"][pollName].hasOwnProperty("emoji")) { //Test if emoji category has been set up
-                        persistentData["DATA"][pollName]["emoji"][choosedEmoji] = element;
-                    } else {
-                        persistentData["DATA"][pollName]["emoji"] = { //If no set it up
-                            'initial': 0
-                        } //If no set up the choices
-                        persistentData["DATA"][pollName]["emoji"][choosedEmoji] = element; //And save the emoji for this answer
-                        delete persistentData["DATA"][pollName]["emoji"]['initial'];
-                    }
+                   
+                }catch(error){
+                    pollEmoji[elementID] = "none";
                 }
+                
+                console.log(pollEmoji[elementID]);
 
             });
 
-            if (emojiError == false) { //No error so send the messsage
-                //If the data is created with no errors, send this message and continue is job
-                console.log(FgMagenta + "Poll data succesfully created\n" + FgWhite);
 
-                console.log(FgCyan + "Sending message" + FgWhite);
-
-                //This send the message created by createPollLook()
-                message.channel.send(createPollLook(pollName));
-
-                //End of the poll creation process. 
-                console.log(FgMagenta + "Message sent !! Poll is active" + FgWhite);
-
-                //Reload the data so it includes the newly made poll
-                reloadData();
-            } else {
-                console.log(FgRed + "Failed to create the poll" + FgWhite + "\n" +
-                    FgBlue + "Not enought emoji in the list" + FgWhite);
-            }
-
-        } catch (error) {
-            console.log(FgRed + "Failed to create the poll" + FgWhite + "\n" +
+        }catch (error) {
+            console.log(BgRed + FgBlack + " ERROR WRITE POLLHELP FOR INFORMATIONS " + FgWhite + BgBlack +"\n" +
                 error);
+            erreur = true;
+        }
+    
+
+        if (erreur == false){
+            //Write the poll name so we can find it later, plus the values
+            console.log(FgCyan + "Poll initiated. Name : " + FgGreen + pollName + "\n" +
+                FgCyan + "Answers : " + FgGreen + pollChoices + FgWhite);
+
+
+            //Try-catch, avoiding crashes (so bot wont have to restart in case of an error)
+            try {
+
+                //Create the poll and his data
+                console.log(FgCyan + "Creating poll data" + FgWhite)
+
+                //Set up of the data ([INFO] part)
+                persistentData["DATA"][pollID] = {
+                    "Info": {
+                        "Name": pollName,
+                        "User": message.author.username, //Creator of the poll
+                        "UserID": message.author.id      //Id of the creator
+                    }
+                }
+                console.log(FgMagenta + "Poll info created in DATA" + FgWhite)
+
+                var numberElement = 0;
+                var emojiError = false
+    
+
+                //For each choices
+                pollChoices.forEach(element => {
+
+                    numberElement = numberElement + 1; //Count the element
+
+                    if (numberElement > emojiMax) { //ERROR because not enouth emoji
+                        emojiError = true;
+                        message.channel.send("Too much answers. Try with less answers or add more emojis in ```emojilist.json```")
+                    } else {
+
+                        //Create the element in the DATA (basically saving answers)
+                        if (persistentData["DATA"][pollID].hasOwnProperty("Choices")) { //Test if the choices has been set up
+
+                            persistentData["DATA"][pollID]["Choices"][element] = 0; //If yes save the answer
+
+                        } else {  //If no set up the choices
+
+                            persistentData["DATA"][pollID]["Choices"] = {  //Initiate Choices
+                                'initial': 0
+                            } 
+
+                            persistentData["DATA"][pollID]["Choices"][element] = 0; //And save the answer
+                            delete persistentData["DATA"][pollID]["Choices"]['initial'];  //delete the inital value used to create Choices
+                        }
+
+                        //Choose a emoji for this answer
+
+                        if (pollEmoji[numberElement - 1] != "none"){
+
+                            choosedEmoji = pollEmoji[numberElement - 1];
+                        }
+
+
+
+                        if (pollEmoji[numberElement - 1] == "none"){ //If the answer have no emoji argument
+                            var continueEmoji = true;
+                            while (continueEmoji == true) {
+
+                                var emojiNumber = getRandomInt(1, emojiMax) //Get a random emoji
+                                var i = 0;
+                                for (var key in emojiList["emoji"]) {
+                                    i = i + 1;
+                                    if (i == emojiNumber) {
+                                        var choosedEmoji = key;
+                                    }
+                                }
+
+                                //Verify if this emoji is not used
+                                if (usedEmoji.includes(choosedEmoji)) {
+                                    continueEmoji = true; //The emoji is already used
+                                } else {
+                                    continueEmoji = false;     //None emoji has been choosed so this one is good
+                                }
+                            }
+                        }
+
+
+                        if (persistentData["DATA"][pollID].hasOwnProperty("emoji")) { //Test if emoji category has been set up
+                            persistentData["DATA"][pollID]["emoji"][choosedEmoji] = element;
+                        } else {
+                            persistentData["DATA"][pollID]["emoji"] = { //If no set it up
+                                'initial': 0
+                            } //If no set up the choices
+                            persistentData["DATA"][pollID]["emoji"][choosedEmoji] = element; //And save the emoji for this answer
+                            delete persistentData["DATA"][pollID]["emoji"]['initial'];
+                        }
+                        usedEmoji.push(choosedEmoji); //Add the choosed emoji to the list to not use it again
+                    }
+
+                });
+
+                if (emojiError == false) { //No error so send the messsage
+                    //If the data is created with no errors, send this message and continue is job
+                    console.log(FgMagenta + "Poll data succesfully created\n" + FgWhite);
+
+                    console.log(FgCyan + "Sending message" + FgWhite);
+
+                    //This send the message created by createPollLook()
+                    message.channel.send(createPollLook(pollID));
+
+                    //End of the poll creation process. 
+                    console.log(FgMagenta + "Message sent !! Poll is active" + FgWhite);
+
+                    //Reload the data so it includes the newly made poll
+                    reloadData();
+                } else {
+                    console.log(FgRed + "Failed to create the poll" + FgWhite + "\n" +
+                        FgBlue + "Not enought emoji in the list" + FgWhite);
+                }
+
+            } catch (error) {
+                console.log(FgRed + "Failed to create the poll" + FgWhite + "\n" +
+                    error);
+            }
         }
     }
 
@@ -191,7 +248,7 @@ bot.on("message", message => {
     //Help command
     if (message.content.startsWith("PollHelp")) {
         message.delete;
-        message.channel.send("To create a poll, send ```CreatePoll=Answer 1;Answer 2;Answer 3```" +
+        message.channel.send("To create a poll, send ```CreatePoll(Name)=Answer 1(emoji1);Answer 2(emoji2);Answer 3(emoji3)```" +
             "\nYou can set any number of choices between 2 and the number of emote you have in emojilist.json." +
             "\n\nYou can delete a poll by sending ```DeletePoll POLL_NUMBER```."
             + "\n\nTo vote, add the emoji associated with your answer."
@@ -222,6 +279,40 @@ bot.on("message", message => {
             reloadData();
         }
     }
+
+    //Reload Channel
+    if (message.content.startsWith("Reload poll ")) {
+
+        splitMessage = message.content.split(" "); //Get the ID of the poll
+        ID = splitMessage[2];
+        console.log(ID);
+        if(persistentData["DATA"].hasOwnProperty(ID)){
+            message.channel.send(createPollLook(ID));
+        }
+
+    }
+
+    //See more information of the poll
+    if (message.content.startsWith("Info poll ")) {
+
+        splitMessage = message.content.split(" "); //Get the ID of the poll
+        ID = splitMessage[2];
+        if(persistentData["DATA"].hasOwnProperty(ID)){
+            message.channel.send(createPollInfo(ID));
+        }
+
+    }
+
+    //Add a emoji
+    if (message.content == "Add emoji poll"){
+
+        message.channel.send("REACT TO THIS MESSAGE WITH THE EMOJI YOU WANT TO ADD");
+
+
+    }
+
+
+
 })
 
 //When a reaction is added, do this
@@ -238,14 +329,18 @@ bot.on('messageReactionAdd', (messageReaction, user) => {
 
             //For better readabilty
             reactEmoji = messageReaction.emoji;
+            console.log(reactEmoji.name);
+            console.log(reactEmoji.identifier)
+
 
             //If the emoji category of the poll contain this emoji, do this
             if (persistentData["DATA"][pollID]["emoji"].hasOwnProperty(reactEmoji.name)) {
 
                 //Reset userIsOk
                 var userIsOk = false;
+                var reactAnswer = persistentData["DATA"][pollID]["emoji"][reactEmoji.name]
 
-                 //Test if Users has been set up
+                //Test if Users has been set up
                 if (persistentData["DATA"][pollID].hasOwnProperty("Users")) {
 
                     if (persistentData["DATA"][pollID]["Users"].hasOwnProperty(user)) {
@@ -263,12 +358,19 @@ bot.on('messageReactionAdd', (messageReaction, user) => {
                     userIsOk = true //The user didn't voted because the User was not set up
                 }
 
+                if(persistentData["DATA"][pollID].hasOwnProperty("UsersName") == false){
+                    persistentData["DATA"][pollID]["UsersName"] = { //If no set it up
+                        'initial': 0
+                    } //If no set up the choices
+                    delete persistentData["DATA"][pollID]["UsersName"]['initial'];
+                }
+
                 if (userIsOk == true) { //The user didn't voted in this poll
 
-                    var reactAnswer = persistentData["DATA"][pollID]["emoji"][reactEmoji.name];
 
                     persistentData["DATA"][pollID]["Choices"][reactAnswer]++; //Add a vote
                     persistentData["DATA"][pollID]["Users"][user] = reactAnswer; //Assign this vote to this user
+                    persistentData["DATA"][pollID]["UsersName"][user.username] = reactAnswer;              
 
                     reloadData();
 
@@ -279,7 +381,9 @@ bot.on('messageReactionAdd', (messageReaction, user) => {
 
                     console.log(FgRed + "Failed to save the vote" + FgWhite + "\n" +
                         FgBlue + "This user already voted" + FgWhite);
-                    messageReaction.remove(user); //Remove the vote
+                    if(persistentData["DATA"][pollID]["Users"][user] != reactAnswer){
+                        messageReaction.remove(user); //Remove the vote
+                    }
 
                 }
             } else { //This emoji can't be used
@@ -287,6 +391,33 @@ bot.on('messageReactionAdd', (messageReaction, user) => {
             }
         }
     }
+
+    if (messageReaction.message.content == "REACT TO THIS MESSAGE WITH THE EMOJI YOU WANT TO ADD"){
+
+        var reactEmoji = messageReaction.emoji;
+
+        emojiName = reactEmoji.name;
+        if (emojiList["emoji"].hasOwnProperty(emojiName) == false){
+            if (reactEmoji.identifier.startsWith("%")){
+                emojiList["emoji"][emojiName] = emojiName;
+            } else {
+                emojiList["emoji"][emojiName] = "<:" + reactEmoji.identifier + ">";
+            }
+            reloadDataEmoji();
+            emojiMax++;
+            messageReaction.message.delete();
+        } else {
+            messageReaction.message.edit("ERROR");
+            messageReaction.message.delete(5000);
+        }
+        
+
+    }
+
+
+
+
+
 })
 
 //When a reaction is removed do this...
@@ -322,6 +453,7 @@ bot.on('messageReactionRemove', (messageReaction, user) => {
                         
                         //Delete the user
                         delete persistentData["DATA"][pollID]["Users"][user];
+                        delete persistentData["DATA"][pollID]["UsersName"][user.username];
 
 
                         reloadData();
@@ -339,6 +471,9 @@ bot.on('messageReactionRemove', (messageReaction, user) => {
 //This function will create the poll look
 function createPollLook(ID) {
     returnedStringToPoll = "Poll number " + ID + "\n";
+    PollName = persistentData["DATA"][ID]["Info"]["Name"];
+    PollAuthor = persistentData["DATA"][ID]["Info"]["UserID"];
+    returnedStringToPoll += "Question by <@" + PollAuthor + "> : " + PollName + "\n";
 
     //reset totalVote
     totalVote = 0;
@@ -468,6 +603,79 @@ function emojiToNumber(number = "0️⃣") {
     } else {
         return (10)
     }
+}
+
+//This function will create the poll look
+function createPollInfo(ID) {
+    returnedStringToPoll = "POLL INFO: \n ```"
+    returnedStringToPoll += "Poll number " + ID + "\n";
+    PollName = persistentData["DATA"][ID]["Info"]["Name"];
+    PollAuthor = persistentData["DATA"][ID]["Info"]["User"];
+    returnedStringToPoll += "Question by " + PollAuthor + " : " + PollName + "\n";
+
+    //reset totalVote
+    totalVote = 0;
+
+
+
+    var size = 0;
+
+    //Get the number of choices
+    if (persistentData["DATA"].hasOwnProperty(ID)) {
+        for (var key in persistentData["DATA"][ID]["Choices"]) {
+            totalVote += persistentData["DATA"][ID]["Choices"][key];
+            size++;
+        }
+    }
+
+    for (let index = 0; index < size; index++) {
+        var i = 0;
+        for (var key in persistentData["DATA"][ID]["Choices"]) {
+            if (i == index) {
+                var answer = key;
+            }
+            i = i + 1;
+        } 
+
+        emojisend = "";
+        for (var key in persistentData["DATA"][ID]["emoji"]) {
+            if (persistentData["DATA"][ID]["emoji"][key] == answer) {
+                var emojiName = key;
+            }
+        }
+        emojisend = emojiList["emoji"][emojiName];
+
+        returnedStringToPoll += "\n";
+        returnedStringToPoll += emojiName + " : " + answer + " (" + persistentData["DATA"][ID]["Choices"][answer] + " votes) :\n";
+
+        for (var key in persistentData["DATA"][ID]["UsersName"]) {
+            if (persistentData["DATA"][ID]["UsersName"][key] == answer) {
+                returnedStringToPoll += key + " \n";
+            }
+        }
+
+    }
+
+    returnedStringToPoll += "```"
+    return returnedStringToPoll
+}
+
+function reloadDataEmoji() {
+
+    console.log(FgCyan + "Reloding the Data..." + FgWhite)
+
+    var json = JSON.stringify(emojiList); //Prepare the DATA for saving
+
+    fs.writeFile("data/emojilist.json", json, 'utf8', function callback(err) {
+        if (err) {
+            console.log(FgRed + err + FgWhite);
+        } else {
+            console.log(FgMagenta + "Data written successfuly" + FgWhite);
+        }
+    });
+
+
+    console.log(FgMagenta + "Success!!!" + FgWhite)
 }
 
 
