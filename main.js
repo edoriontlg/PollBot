@@ -469,6 +469,7 @@ bot.on('messageReactionRemove', (messageReaction, user) => {
 
 
 //This function will create the poll look
+//OLD
 function createPollLook(ID) {
     returnedStringToPoll = "Poll number " + ID + "\n";
     PollName = persistentData["DATA"][ID]["Info"]["Name"];
@@ -523,6 +524,9 @@ function createPollLook(ID) {
     }
     return returnedStringToPoll
 }
+
+
+
 
 //This function reload the Data
 function reloadData() {
@@ -606,6 +610,7 @@ function emojiToNumber(number = "0️⃣") {
 }
 
 //This function will create the poll look
+//OLD, WE WILL USE EMBEDS FROM NOW 
 function createPollInfo(ID) {
     returnedStringToPoll = "POLL INFO: \n ```"
     returnedStringToPoll += "Poll number " + ID + "\n";
@@ -659,6 +664,11 @@ function createPollInfo(ID) {
     returnedStringToPoll += "```"
     return returnedStringToPoll
 }
+
+
+
+
+
 
 function reloadDataEmoji() {
 

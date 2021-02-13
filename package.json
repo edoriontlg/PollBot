@@ -4,7 +4,7 @@
   "description": "A discord bot that create polls for your server",
   "main": "main.js",
   "dependencies": {
-    "discord.js": "^11.5.1",
+    "discord.js": "^11.6.4",
     "progress": "^2.0.3"
   },
   "devDependencies": {},
