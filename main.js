@@ -250,7 +250,7 @@ bot.on("message", message => {
         message.delete;
         message.channel.send("To create a poll, send ```CreatePoll(Name)=Answer 1(emoji1);Answer 2(emoji2);Answer 3(emoji3)```" +
             "\nYou can set any number of choices between 2 and the number of emote you have in emojilist.json." +
-            "\n\nYou can delete a poll by sending ```DeletePoll POLL_NUMBER```."
+            "\n\nYou can delete a poll by sending ```DeletePoll POLL_NUMBER```"
             + "\n\nTo vote, add the emoji associated with your answer."
             + "\n\nYou can modify your vote by removing your last vote.")
     }
